@@ -132,13 +132,16 @@ def generate_target_profile(
     prompt = build_profile_prompt(tracker_data, status_data, current_profile)
 
     logger.info("Generating target role profile via Claude...")
-    response = client.messages.create(
-        model=MODEL,
-        max_tokens=2000,
-        system=SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": prompt}],
-    )
-
-    profile_text = response.content[0].text.strip()
-    logger.info(f"Generated profile: {len(profile_text)} chars")
-    return profile_text
+    try:
+        response = client.messages.create(
+            model=MODEL,
+            max_tokens=4000,
+            system=SYSTEM_PROMPT,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        profile_text = response.content[0].text.strip()
+        logger.info(f"Generated profile: {len(profile_text)} chars")
+        return profile_text
+    except Exception as e:
+        logger.error(f"Profile generation failed: {e}")
+        return "Profile generation failed — using previous profile if available."
