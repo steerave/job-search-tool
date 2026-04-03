@@ -1,5 +1,25 @@
 # Project Status Log
 
+## 2026-04-03
+
+**Done:**
+- Fixed config_updater truncated JSON parsing — increased max_tokens from 2000 to 4096 and added fallback parser to recover suggestions from partial responses
+- Ran first real feedback analysis: 17 new signals processed, 34 config changes applied (12 job titles, 10 required keywords, 12 exclude keywords)
+- Target role profile regenerated from tracker feedback and application history
+- Created Windows Task Scheduler task "Job Search Feedback Analysis" for daily 6am runs
+- Added 2 new tests for truncated JSON recovery in config_updater
+
+**In Progress:**
+- config.yaml, profile/target_role_profile.md, and data/last_analysis.json updated by feedback analysis but not yet committed
+
+**Next:**
+- Commit feedback analysis results and bug fix
+- Start career strategy expansion: multi-profile AI search, career-advisor skill, networking tracker
+
+**Notes:**
+- The 6am feedback task was never scheduled before today — only the 5am main search was in Task Scheduler
+- Feedback analysis confirmed working end-to-end with real sheet data (70 tracker rows, 56 status rows)
+
 ## 2026-04-01
 
 **Done:**
