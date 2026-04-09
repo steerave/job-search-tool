@@ -155,3 +155,225 @@ ATS_ADAPTERS: dict[str, callable] = {
     "recruitee": fetch_recruitee,
     "bamboohr": fetch_bamboohr,
 }
+
+
+# ─────────────────────────────────────────────────────────────
+# Remote Detection (one function per ATS)
+# ─────────────────────────────────────────────────────────────
+
+def _is_remote_greenhouse(job: dict) -> bool:
+    loc = job.get("location", {})
+    name = loc.get("name", "") if isinstance(loc, dict) else str(loc)
+    return "remote" in name.lower()
+
+
+def _is_remote_lever(job: dict) -> bool:
+    cats = job.get("categories", {})
+    location = cats.get("location", "").lower() if isinstance(cats, dict) else ""
+    workplace = job.get("workplaceType", "").lower()
+    return "remote" in location or workplace == "remote"
+
+
+def _is_remote_ashby(job: dict) -> bool:
+    if job.get("isRemote"):
+        return True
+    loc = job.get("location", "")
+    name = loc.get("name", "") if isinstance(loc, dict) else str(loc)
+    return "remote" in name.lower()
+
+
+def _is_remote_smartrecruiters(job: dict) -> bool:
+    loc = job.get("location", {})
+    if isinstance(loc, dict):
+        if loc.get("remote"):
+            return True
+        return "remote" in loc.get("city", "").lower()
+    return "remote" in str(loc).lower()
+
+
+def _is_remote_recruitee(job: dict) -> bool:
+    if job.get("remote"):
+        return True
+    return "remote" in job.get("city_text", "").lower()
+
+
+def _is_remote_bamboohr(job: dict) -> bool:
+    loc = job.get("location", {})
+    city = loc.get("city", "") if isinstance(loc, dict) else str(loc)
+    return "remote" in city.lower()
+
+
+REMOTE_DETECTORS: dict[str, callable] = {
+    "greenhouse": _is_remote_greenhouse,
+    "lever": _is_remote_lever,
+    "ashby": _is_remote_ashby,
+    "smartrecruiters": _is_remote_smartrecruiters,
+    "recruitee": _is_remote_recruitee,
+    "bamboohr": _is_remote_bamboohr,
+}
+
+
+# ─────────────────────────────────────────────────────────────
+# Date Extraction (one function per ATS)
+# ─────────────────────────────────────────────────────────────
+
+def _get_date_greenhouse(job: dict):
+    return job.get("updated_at") or job.get("created_at")
+
+def _get_date_lever(job: dict):
+    return job.get("createdAt")           # Unix ms integer
+
+def _get_date_ashby(job: dict):
+    return job.get("publishedDate")
+
+def _get_date_smartrecruiters(job: dict):
+    return job.get("createDate")
+
+def _get_date_recruitee(job: dict):
+    return job.get("created_at")
+
+def _get_date_bamboohr(job: dict):
+    return job.get("datePosted") or job.get("created_at")
+
+
+DATE_EXTRACTORS: dict[str, callable] = {
+    "greenhouse": _get_date_greenhouse,
+    "lever": _get_date_lever,
+    "ashby": _get_date_ashby,
+    "smartrecruiters": _get_date_smartrecruiters,
+    "recruitee": _get_date_recruitee,
+    "bamboohr": _get_date_bamboohr,
+}
+
+
+# ─────────────────────────────────────────────────────────────
+# Job Normalization (one function per ATS → standard 14-field job dict)
+# ─────────────────────────────────────────────────────────────
+
+def _make_job(title, company, location, description, url, date_val, is_remote, source) -> dict:
+    """Build a standard job dict. All ATS normalizers call this."""
+    dt = _parse_date(date_val)
+    return {
+        "title": str(title or ""),
+        "company": str(company or ""),
+        "location": str(location or ""),
+        "description": str(description or ""),
+        "url": str(url or ""),
+        "job_type": "fulltime",
+        "salary_min": None,
+        "salary_max": None,
+        "salary_currency": "USD",
+        "salary_interval": "",
+        "date_posted": dt.isoformat() if dt else "",
+        "is_remote": bool(is_remote),
+        "source": source,
+        "search_query": company,
+    }
+
+
+def _normalize_greenhouse(job: dict, company_name: str) -> dict:
+    loc = job.get("location", {})
+    loc_str = loc.get("name", "") if isinstance(loc, dict) else str(loc)
+    return _make_job(
+        title=job.get("title"),
+        company=company_name,
+        location=loc_str,
+        description=job.get("content", ""),
+        url=job.get("absolute_url", ""),
+        date_val=_get_date_greenhouse(job),
+        is_remote=_is_remote_greenhouse(job),
+        source="greenhouse",
+    )
+
+
+def _normalize_lever(job: dict, company_name: str) -> dict:
+    cats = job.get("categories", {}) if isinstance(job.get("categories"), dict) else {}
+    return _make_job(
+        title=job.get("text"),
+        company=company_name,
+        location=cats.get("location", ""),
+        description=job.get("descriptionPlain", "") or job.get("description", ""),
+        url=job.get("hostedUrl", ""),
+        date_val=_get_date_lever(job),
+        is_remote=_is_remote_lever(job),
+        source="lever",
+    )
+
+
+def _normalize_ashby(job: dict, company_name: str) -> dict:
+    loc = job.get("location", "")
+    loc_str = loc.get("name", "") if isinstance(loc, dict) else str(loc)
+    return _make_job(
+        title=job.get("title"),
+        company=company_name,
+        location=loc_str,
+        description=job.get("descriptionHtml", "") or job.get("descriptionPlain", ""),
+        url=job.get("jobUrl", "") or job.get("applyUrl", ""),
+        date_val=_get_date_ashby(job),
+        is_remote=_is_remote_ashby(job),
+        source="ashby",
+    )
+
+
+def _normalize_smartrecruiters(job: dict, company_name: str) -> dict:
+    loc = job.get("location", {})
+    if isinstance(loc, dict):
+        parts = [loc.get("city", ""), loc.get("country", "")]
+        loc_str = ", ".join(p for p in parts if p)
+    else:
+        loc_str = str(loc)
+    job_id = job.get("id", "")
+    url = f"https://jobs.smartrecruiters.com/{company_name.replace(' ', '')}/{job_id}" if job_id else ""
+    return _make_job(
+        title=job.get("name"),
+        company=company_name,
+        location=loc_str,
+        description=job.get("jobAdText", ""),
+        url=url,
+        date_val=_get_date_smartrecruiters(job),
+        is_remote=_is_remote_smartrecruiters(job),
+        source="smartrecruiters",
+    )
+
+
+def _normalize_recruitee(job: dict, company_name: str) -> dict:
+    return _make_job(
+        title=job.get("title"),
+        company=company_name,
+        location=job.get("city_text", "") or job.get("location", ""),
+        description=job.get("description", ""),
+        url=job.get("careers_url", ""),
+        date_val=_get_date_recruitee(job),
+        is_remote=_is_remote_recruitee(job),
+        source="recruitee",
+    )
+
+
+def _normalize_bamboohr(job: dict, company_name: str) -> dict:
+    loc = job.get("location", {})
+    loc_str = loc.get("city", "") if isinstance(loc, dict) else str(loc)
+    title_field = job.get("title", {})
+    title = title_field.get("label", "") if isinstance(title_field, dict) else str(title_field)
+    job_id = job.get("id", "")
+    slug = re.sub(r"[^a-z0-9]+", "-", company_name.lower()).strip("-")
+    url = f"https://{slug}.bamboohr.com/careers/{job_id}" if job_id else ""
+    return _make_job(
+        title=title,
+        company=company_name,
+        location=loc_str,
+        description=job.get("description", ""),
+        url=url,
+        date_val=_get_date_bamboohr(job),
+        is_remote=_is_remote_bamboohr(job),
+        source="bamboohr",
+    )
+
+
+NORMALIZERS: dict[str, callable] = {
+    "greenhouse": _normalize_greenhouse,
+    "lever": _normalize_lever,
+    "ashby": _normalize_ashby,
+    "smartrecruiters": _normalize_smartrecruiters,
+    "recruitee": _normalize_recruitee,
+    "bamboohr": _normalize_bamboohr,
+}

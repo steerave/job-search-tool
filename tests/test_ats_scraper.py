@@ -140,3 +140,88 @@ def test_ats_adapters_dict_contains_all():
     from src.ats_scraper import ATS_ADAPTERS
     for name in ("greenhouse", "lever", "ashby", "smartrecruiters", "recruitee", "bamboohr"):
         assert name in ATS_ADAPTERS
+
+
+# ── Remote detection ──────────────────────────────────────────
+
+def test_remote_greenhouse_by_location_name():
+    from src.ats_scraper import _is_remote_greenhouse
+    assert _is_remote_greenhouse({"location": {"name": "Remote - US"}}) is True
+
+def test_remote_greenhouse_not_remote():
+    from src.ats_scraper import _is_remote_greenhouse
+    assert _is_remote_greenhouse({"location": {"name": "New York, NY"}}) is False
+
+def test_remote_lever_workplace_type():
+    from src.ats_scraper import _is_remote_lever
+    assert _is_remote_lever({"workplaceType": "remote", "categories": {}}) is True
+
+def test_remote_lever_location_string():
+    from src.ats_scraper import _is_remote_lever
+    assert _is_remote_lever({"categories": {"location": "Remote"}, "workplaceType": ""}) is True
+
+def test_remote_ashby_flag():
+    from src.ats_scraper import _is_remote_ashby
+    assert _is_remote_ashby({"isRemote": True}) is True
+
+def test_remote_smartrecruiters_flag():
+    from src.ats_scraper import _is_remote_smartrecruiters
+    assert _is_remote_smartrecruiters({"location": {"remote": True}}) is True
+
+def test_remote_recruitee_flag():
+    from src.ats_scraper import _is_remote_recruitee
+    assert _is_remote_recruitee({"remote": True, "city_text": ""}) is True
+
+# ── Normalization ─────────────────────────────────────────────
+
+def test_normalize_greenhouse_fields():
+    from src.ats_scraper import _normalize_greenhouse
+    raw = {
+        "title": "VP of Digital",
+        "location": {"name": "Remote"},
+        "absolute_url": "https://boards.greenhouse.io/ogilvy/jobs/123",
+        "content": "Job description here",
+        "updated_at": "2026-04-01T10:00:00Z",
+    }
+    job = _normalize_greenhouse(raw, "Ogilvy")
+    assert job["title"] == "VP of Digital"
+    assert job["company"] == "Ogilvy"
+    assert job["location"] == "Remote"
+    assert job["url"] == "https://boards.greenhouse.io/ogilvy/jobs/123"
+    assert job["source"] == "greenhouse"
+    assert job["search_query"] == "Ogilvy"
+    assert job["is_remote"] is True
+    assert "date_posted" in job
+    # Must have all 14 standard fields
+    for field in ("title", "company", "location", "description", "url", "job_type",
+                  "salary_min", "salary_max", "salary_currency", "salary_interval",
+                  "date_posted", "is_remote", "source", "search_query"):
+        assert field in job, f"Missing field: {field}"
+
+
+def test_normalize_lever_fields():
+    from src.ats_scraper import _normalize_lever
+    raw = {
+        "text": "Director of Strategy",
+        "categories": {"location": "Remote"},
+        "hostedUrl": "https://jobs.lever.co/rga/abc",
+        "descriptionPlain": "Description",
+        "createdAt": 1705312200000,
+        "workplaceType": "remote",
+    }
+    job = _normalize_lever(raw, "R/GA")
+    assert job["title"] == "Director of Strategy"
+    assert job["company"] == "R/GA"
+    assert job["source"] == "lever"
+    assert job["is_remote"] is True
+
+
+def test_normalize_produces_exactly_14_fields():
+    """Normalizers must produce exactly the 14 standard fields — no more, no less."""
+    from src.ats_scraper import _normalize_greenhouse
+    raw = {"title": "Test", "location": {"name": "Remote"}, "absolute_url": "", "content": "", "updated_at": None}
+    job = _normalize_greenhouse(raw, "TestCo")
+    standard_fields = {"title", "company", "location", "description", "url", "job_type",
+                       "salary_min", "salary_max", "salary_currency", "salary_interval",
+                       "date_posted", "is_remote", "source", "search_query"}
+    assert set(job.keys()) == standard_fields
