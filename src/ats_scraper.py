@@ -377,3 +377,33 @@ NORMALIZERS: dict[str, callable] = {
     "recruitee": _normalize_recruitee,
     "bamboohr": _normalize_bamboohr,
 }
+
+
+# ─────────────────────────────────────────────────────────────
+# ATS Auto-Detection
+# ─────────────────────────────────────────────────────────────
+
+def detect_ats(company_name: str, detection_order: list[str]) -> tuple[str, str] | tuple[None, None]:
+    """Probe ATS endpoints to find which one hosts this company's jobs.
+
+    Returns (ats_type, slug) on first successful probe, or (None, None) if all fail.
+    A successful probe means the endpoint returned a valid response (even an empty job list).
+    """
+    candidates = _generate_slug_candidates(company_name)
+    if not candidates:
+        return None, None
+    for ats in detection_order:
+        fetch_fn = ATS_ADAPTERS.get(ats)
+        if not fetch_fn:
+            continue
+        for slug in candidates:
+            try:
+                result = fetch_fn(slug)
+                if result is not None:   # None = network/parse error; [] = valid but no current jobs
+                    logger.info(f"  Detected {company_name} → {ats}/{slug}")
+                    return ats, slug
+            except Exception:
+                pass
+            time.sleep(PROBE_DELAY)
+    logger.info(f"  No ATS detected for: {company_name}")
+    return None, None

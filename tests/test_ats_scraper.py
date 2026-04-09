@@ -225,3 +225,49 @@ def test_normalize_produces_exactly_14_fields():
                        "salary_min", "salary_max", "salary_currency", "salary_interval",
                        "date_posted", "is_remote", "source", "search_query"}
     assert set(job.keys()) == standard_fields
+
+
+def test_detect_ats_finds_greenhouse():
+    from src.ats_scraper import detect_ats
+    greenhouse_payload = {"jobs": [{"title": "Test Job", "location": {"name": "Remote"}}]}
+    mock_resp = MagicMock()
+    mock_resp.status_code = 200
+    mock_resp.json.return_value = greenhouse_payload
+    with patch("src.ats_scraper.requests.get", return_value=mock_resp):
+        ats, slug = detect_ats("Ogilvy", ["greenhouse", "lever"])
+    assert ats == "greenhouse"
+    assert slug == "ogilvy"
+
+
+def test_detect_ats_falls_through_to_lever():
+    from src.ats_scraper import detect_ats
+    lever_payload = [{"text": "Test Job", "categories": {}}]
+
+    call_count = {"n": 0}
+
+    def fake_get(url, **kwargs):
+        call_count["n"] += 1
+        mock = MagicMock()
+        if "greenhouse" in url:
+            mock.status_code = 404
+            mock.json.return_value = {}
+        else:
+            mock.status_code = 200
+            mock.json.return_value = lever_payload
+        return mock
+
+    with patch("src.ats_scraper.requests.get", side_effect=fake_get):
+        ats, slug = detect_ats("Huge Agency", ["greenhouse", "lever"])
+    assert ats == "lever"
+    assert slug in ("huge", "huge-agency")
+
+
+def test_detect_ats_returns_none_when_all_fail():
+    from src.ats_scraper import detect_ats
+    mock_resp = MagicMock()
+    mock_resp.status_code = 404
+    mock_resp.json.return_value = {}
+    with patch("src.ats_scraper.requests.get", return_value=mock_resp):
+        ats, slug = detect_ats("Unknown Company LLC", ["greenhouse", "lever"])
+    assert ats is None
+    assert slug is None
