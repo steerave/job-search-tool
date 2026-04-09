@@ -388,3 +388,72 @@ def test_fetch_watchlist_jobs_filters_old_jobs():
          patch("src.ats_scraper.update_watchlist_last_scanned"):
         jobs = fetch_watchlist_jobs(config)
     assert jobs == []
+
+
+def test_scrape_watchlist_tags_search_type():
+    """scrape_watchlist() must tag every job with search_type='watchlist'."""
+    from src.job_scraper import scrape_watchlist
+    fake_jobs = [
+        {"title": "VP Digital", "company": "Ogilvy", "location": "Remote",
+         "description": "digital marketing strategy", "url": "https://example.com",
+         "job_type": "fulltime", "salary_min": None, "salary_max": None,
+         "salary_currency": "USD", "salary_interval": "", "date_posted": "",
+         "is_remote": True, "source": "greenhouse", "search_query": "Ogilvy"},
+    ]
+    config = {
+        "watchlist": {"enabled": True, "lookback_days": 3, "detection_order": ["greenhouse"]},
+        "required_keywords": [],
+        "exclude_keywords": [],
+        "exclude_companies": [],
+    }
+    with patch("src.job_scraper.fetch_watchlist_jobs", return_value=fake_jobs):
+        result = scrape_watchlist(config)
+    assert len(result) == 1
+    assert result[0]["search_type"] == "watchlist"
+
+
+def test_scrape_watchlist_applies_keyword_filter():
+    """Excluded keywords must filter out watchlist jobs."""
+    from src.job_scraper import scrape_watchlist
+    fake_jobs = [
+        {"title": "VP Digital", "company": "Ogilvy", "location": "Remote",
+         "description": "staffing agency recruiter placement", "url": "",
+         "job_type": "fulltime", "salary_min": None, "salary_max": None,
+         "salary_currency": "USD", "salary_interval": "", "date_posted": "",
+         "is_remote": True, "source": "greenhouse", "search_query": "Ogilvy"},
+    ]
+    config = {
+        "watchlist": {"enabled": True, "lookback_days": 3, "detection_order": ["greenhouse"]},
+        "required_keywords": [],
+        "exclude_keywords": ["staffing"],
+        "exclude_companies": [],
+    }
+    with patch("src.job_scraper.fetch_watchlist_jobs", return_value=fake_jobs):
+        result = scrape_watchlist(config)
+    assert result == []
+
+
+def test_scrape_all_jobs_includes_watchlist():
+    """scrape_all_jobs() must include watchlist results in combined output."""
+    from src.job_scraper import scrape_all_jobs
+    config = {
+        "watchlist": {"enabled": True, "lookback_days": 3, "detection_order": []},
+        "national_remote": {"enabled": False},
+        "local_qc": {"enabled": False},
+        "required_keywords": [],
+        "exclude_keywords": [],
+        "exclude_companies": [],
+    }
+    watchlist_job = {
+        "title": "Watchlist Job", "company": "TestCo", "location": "Remote",
+        "description": "", "url": "", "job_type": "fulltime",
+        "salary_min": None, "salary_max": None, "salary_currency": "USD",
+        "salary_interval": "", "date_posted": "", "is_remote": True,
+        "source": "greenhouse", "search_query": "TestCo",
+    }
+    with patch("src.job_scraper.scrape_national_remote", return_value=[]), \
+         patch("src.job_scraper.scrape_local_qc", return_value=[]), \
+         patch("src.job_scraper.fetch_watchlist_jobs", return_value=[watchlist_job]):
+        result = scrape_all_jobs(config)
+    assert any(j["search_type"] == "watchlist" for j in result)
+    assert any(j["title"] == "Watchlist Job" for j in result)

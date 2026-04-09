@@ -12,10 +12,13 @@ import time
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
+from src.ats_scraper import fetch_watchlist_jobs
+
 logger = logging.getLogger(__name__)
 
 SEARCH_TYPE_NATIONAL = "national_remote"
 SEARCH_TYPE_LOCAL = "local_qc"
+SEARCH_TYPE_WATCHLIST = "watchlist"
 
 
 def _scrape_for_title(
@@ -255,15 +258,40 @@ def scrape_local_qc(config: dict) -> list[dict]:
     return all_jobs
 
 
+def scrape_watchlist(config: dict) -> list[dict]:
+    """
+    Fetch jobs from company ATS endpoints via the Watchlist Google Sheet tab.
+    Returns list of job dicts tagged with search_type='watchlist'.
+    Required keywords are skipped (watchlist jobs aren't found by title query).
+    """
+    cfg = config.get("watchlist", {})
+    if not cfg.get("enabled", True):
+        logger.info("Watchlist scan is disabled in config")
+        return []
+
+    jobs = fetch_watchlist_jobs(config)
+    jobs = _apply_keyword_filters(jobs, config, skip_required=True)
+
+    for job in jobs:
+        job["search_type"] = SEARCH_TYPE_WATCHLIST
+
+    logger.info(f"[Watchlist] Total after filtering: {len(jobs)} jobs")
+    return jobs
+
+
 def scrape_all_jobs(config: dict) -> list[dict]:
     """
-    Run both searches and return combined results.
+    Run all three searches and return combined results.
     Each job has a 'search_type' field to distinguish them.
     """
     national = scrape_national_remote(config)
     local = scrape_local_qc(config)
-    combined = national + local
-    logger.info(f"Total jobs scraped: {len(combined)} ({len(national)} national, {len(local)} local)")
+    watchlist = scrape_watchlist(config)
+    combined = national + local + watchlist
+    logger.info(
+        f"Total jobs scraped: {len(combined)} "
+        f"({len(national)} national, {len(local)} local, {len(watchlist)} watchlist)"
+    )
     return combined
 
 
