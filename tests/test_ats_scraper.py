@@ -66,3 +66,77 @@ def test_is_within_days_none():
     from src.ats_scraper import _is_within_days
     # Unknown date → include by default
     assert _is_within_days(None, 3) is True
+
+
+from unittest.mock import patch, MagicMock
+
+
+def _mock_get(return_value):
+    """Helper: patch requests.get to return a mock with .json() and .status_code."""
+    mock_resp = MagicMock()
+    mock_resp.status_code = 200
+    mock_resp.json.return_value = return_value
+    return patch("src.ats_scraper.requests.get", return_value=mock_resp)
+
+
+def test_fetch_greenhouse_returns_jobs():
+    from src.ats_scraper import fetch_greenhouse
+    payload = {"jobs": [{"id": 1, "title": "VP Digital", "location": {"name": "Remote"}}]}
+    with _mock_get(payload):
+        result = fetch_greenhouse("ogilvy")
+    assert len(result) == 1
+    assert result[0]["title"] == "VP Digital"
+
+
+def test_fetch_greenhouse_returns_none_on_error():
+    from src.ats_scraper import fetch_greenhouse
+    with patch("src.ats_scraper.requests.get", side_effect=Exception("timeout")):
+        result = fetch_greenhouse("ogilvy")
+    assert result is None
+
+
+def test_fetch_lever_returns_jobs():
+    from src.ats_scraper import fetch_lever
+    payload = [{"text": "Director of Marketing", "categories": {"location": "Remote"}}]
+    with _mock_get(payload):
+        result = fetch_lever("r-ga")
+    assert len(result) == 1
+    assert result[0]["text"] == "Director of Marketing"
+
+
+def test_fetch_ashby_returns_jobs():
+    from src.ats_scraper import fetch_ashby
+    payload = {"jobPostings": [{"title": "Head of Growth", "isRemote": True}]}
+    with _mock_get(payload):
+        result = fetch_ashby("linear")
+    assert len(result) == 1
+
+
+def test_fetch_smartrecruiters_returns_jobs():
+    from src.ats_scraper import fetch_smartrecruiters
+    payload = {"content": [{"name": "Digital Strategy Lead", "location": {"remote": True}}]}
+    with _mock_get(payload):
+        result = fetch_smartrecruiters("merkle")
+    assert len(result) == 1
+
+
+def test_fetch_recruitee_returns_jobs():
+    from src.ats_scraper import fetch_recruitee
+    payload = {"offers": [{"title": "SEO Manager", "remote": True, "city_text": "Remote"}]}
+    with _mock_get(payload):
+        result = fetch_recruitee("someagency")
+    assert len(result) == 1
+
+
+def test_fetch_bamboohr_returns_jobs():
+    from src.ats_scraper import fetch_bamboohr
+    payload = [{"id": 42, "title": {"label": "Content Strategist"}, "location": {"city": "Remote"}}]
+    with _mock_get(payload):
+        result = fetch_bamboohr("somecompany")
+    assert len(result) == 1
+
+
+def test_ats_adapters_dict_contains_all():
+    from src.ats_scraper import ATS_ADAPTERS
+    for name in ("greenhouse", "lever", "ashby", "smartrecruiters", "recruitee", "bamboohr"):
+        assert name in ATS_ADAPTERS

@@ -76,3 +76,82 @@ def _is_within_days(value: str | int | float | None, days: int) -> bool:
         return True
     cutoff = datetime.now(timezone.utc) - timedelta(days=days)
     return dt >= cutoff
+
+
+# ─────────────────────────────────────────────────────────────
+# HTTP helper
+# ─────────────────────────────────────────────────────────────
+
+def _get(url: str) -> dict | list | None:
+    """GET request returning parsed JSON, or None on any error."""
+    try:
+        resp = requests.get(url, timeout=REQUEST_TIMEOUT, headers={"User-Agent": "JobSearchBot/1.0"})
+        if resp.status_code == 200:
+            return resp.json()
+        return None
+    except Exception:
+        return None
+
+
+# ─────────────────────────────────────────────────────────────
+# ATS Fetch Functions
+# ─────────────────────────────────────────────────────────────
+
+def fetch_greenhouse(slug: str) -> list[dict] | None:
+    """Returns list of raw job dicts, or None if endpoint unreachable."""
+    data = _get(f"https://boards-api.greenhouse.io/v1/boards/{slug}/jobs?content=true")
+    if data is None:
+        return None
+    jobs = data.get("jobs")
+    return jobs if isinstance(jobs, list) else None
+
+
+def fetch_lever(slug: str) -> list[dict] | None:
+    data = _get(f"https://api.lever.co/v0/postings/{slug}?mode=json")
+    return data if isinstance(data, list) else None
+
+
+def fetch_ashby(slug: str) -> list[dict] | None:
+    data = _get(f"https://api.ashbyhq.com/posting-api/job-board/{slug}")
+    if data is None:
+        return None
+    jobs = data.get("jobPostings")
+    return jobs if isinstance(jobs, list) else None
+
+
+def fetch_smartrecruiters(slug: str) -> list[dict] | None:
+    data = _get(f"https://api.smartrecruiters.com/v1/companies/{slug}/postings")
+    if data is None:
+        return None
+    jobs = data.get("content")
+    return jobs if isinstance(jobs, list) else None
+
+
+def fetch_recruitee(slug: str) -> list[dict] | None:
+    data = _get(f"https://{slug}.recruitee.com/api/offers/")
+    if data is None:
+        return None
+    jobs = data.get("offers")
+    return jobs if isinstance(jobs, list) else None
+
+
+def fetch_bamboohr(slug: str) -> list[dict] | None:
+    data = _get(f"https://{slug}.bamboohr.com/careers/list")
+    if data is None:
+        return None
+    if isinstance(data, list):
+        return data
+    for key in ("result", "jobs", "positions"):
+        if isinstance(data.get(key), list):
+            return data[key]
+    return None
+
+
+ATS_ADAPTERS: dict[str, callable] = {
+    "greenhouse": fetch_greenhouse,
+    "lever": fetch_lever,
+    "ashby": fetch_ashby,
+    "smartrecruiters": fetch_smartrecruiters,
+    "recruitee": fetch_recruitee,
+    "bamboohr": fetch_bamboohr,
+}
