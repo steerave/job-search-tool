@@ -74,13 +74,14 @@ required_keywords:
   - "digital platform"
   - "technical delivery"
   - "product delivery"
+  - "delivery production"
   # Technology / process signals
   - "digital transformation"
   - "agile"
   - "SDLC"
   - "engineering"
   - "release management"
-  - "SaaS"
+  - "AI "
   - "software"
   # Leadership signals
   - "cross-functional"
@@ -90,7 +91,6 @@ required_keywords:
 # Jobs containing any of these are skipped entirely.
 exclude_keywords:
   # Clearly off-target digital roles
-  - "digital marketing"
   - "ecommerce director"
   - "e-commerce director"
   # Technical mismatches (role-specific — don't exclude "data science" as a domain phrase)
@@ -158,21 +158,11 @@ exclude_keywords:
   # Industry / role type mismatches (added by feedback analyzer)
   # Note: "solutions delivery", "platform delivery", "AI delivery", "implementation services",
   # "delivery operations" were NOT added here — they conflict with active job title searches.
-  - "product operations"
-  - "digital strategy"
-  - "client success"
-  - "marketing technology"
-  - "digital promotions"
-  - "consumer applications"
-  - "vendor management"
   - "offshore teams"
   - "release governance"
-  - "PMO"
-  - "PMO director"
   - "pure PMO"
   - "portfolio strategy"
   - "POS systems"
-  - "loyalty program"
   - "cybersecurity"
   - "healthcare"
   - "clinical"
