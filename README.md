@@ -47,7 +47,8 @@ Automated data pipeline that scrapes job listings daily, scores them with Claude
 
 ## Features
 
-- **Multi-source scraping** — pulls from multiple job boards via JobSpy
+- **Multi-source scraping** — pulls from job boards (LinkedIn, Indeed, Google Jobs, ZipRecruiter) via JobSpy
+- **ATS Watchlist** — directly queries company ATS APIs (Greenhouse, Lever, Ashby, SmartRecruiters, Recruitee, BambooHR) for roles not syndicated to job boards; companies managed via a Google Sheet tab with auto-detection of ATS type
 - **LLM-based fit scoring** — Claude scores each job 1–10 against a dynamically-maintained role profile
 - **Self-improving feedback loop** — scores you provide feed back into search config and role profile refinement
 - **Document generation** — tailored resume and cover letter for top matches (above configurable threshold)
