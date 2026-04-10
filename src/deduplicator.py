@@ -9,6 +9,7 @@ import hashlib
 import json
 import logging
 import os
+import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -16,15 +17,52 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_SEEN_JOBS_PATH = "data/seen_jobs.json"
 
+# Legal suffixes that vary between job boards and ATS systems (e.g. "Google LLC" vs "Google")
+_COMPANY_SUFFIX_RE = re.compile(
+    r"\b(inc\.?|llc\.?|corp\.?|ltd\.?|co\.?|plc|gmbh|ag|sa|bv|nv|"
+    r"incorporated|limited|corporation|company|group|agency|digital|media|services)\b",
+    re.IGNORECASE,
+)
+
+# Title stopwords that vary ("Director of Delivery" vs "Director Delivery")
+_TITLE_STOPWORDS_RE = re.compile(r"\b(of|the|and|&)\b", re.IGNORECASE)
+
+# Common abbreviations in titles
+_TITLE_ABBREV = {
+    r"\bsr\.?\b": "senior",
+    r"\bjr\.?\b": "junior",
+    r"\bdir\.?\b": "director",
+    r"\bmgr\.?\b": "manager",
+    r"\bvp\b": "vp",  # keep VP as-is — "VP" and "Vice President" are genuinely distinct titles
+}
+
+
+def _normalize_company(name: str) -> str:
+    name = name.lower().strip()
+    name = _COMPANY_SUFFIX_RE.sub("", name)
+    name = re.sub(r"[^\w\s]", " ", name)   # punctuation → space
+    return re.sub(r"\s+", " ", name).strip()
+
+
+def _normalize_title(title: str) -> str:
+    title = title.lower().strip()
+    for pattern, replacement in _TITLE_ABBREV.items():
+        title = re.sub(pattern, replacement, title)
+    title = _TITLE_STOPWORDS_RE.sub(" ", title)
+    title = re.sub(r"[^\w\s]", " ", title)  # punctuation → space
+    return re.sub(r"\s+", " ", title).strip()
+
 
 def _make_job_id(job: dict) -> str:
     """
-    Generate a stable unique ID for a job based on company + title.
-    Intentionally excludes URL so the same job posted on multiple boards
-    (LinkedIn, Indeed, etc.) is correctly identified as a duplicate.
+    Generate a stable unique ID for a job based on normalized company + title.
+    Normalization handles cross-source variations:
+      - Company: strips legal suffixes (Inc., LLC, Corp.) and punctuation
+      - Title: strips stopwords (of/the/and), normalizes abbreviations (Sr. → Senior)
+    Intentionally excludes URL so the same job on multiple boards is caught as a duplicate.
     """
-    company = job.get("company", "").strip().lower()
-    title = job.get("title", "").strip().lower()
+    company = _normalize_company(job.get("company", ""))
+    title = _normalize_title(job.get("title", ""))
     key = f"{company}||{title}"
     return hashlib.md5(key.encode("utf-8")).hexdigest()
 
