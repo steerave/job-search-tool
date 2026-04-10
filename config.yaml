@@ -158,14 +158,10 @@ exclude_keywords:
   # Industry / role type mismatches (added by feedback analyzer)
   # Note: "solutions delivery", "platform delivery", "AI delivery", "implementation services",
   # "delivery operations" were NOT added here — they conflict with active job title searches.
-  - "AI strategy"
-  - "artificial intelligence"
   - "product operations"
   - "digital strategy"
   - "client success"
   - "marketing technology"
-  - "agentic AI"
-  - "GenAI"
   - "digital promotions"
   - "consumer applications"
   - "vendor management"
