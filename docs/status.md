@@ -1,5 +1,28 @@
 # Project Status Log
 
+## 2026-04-10
+
+**Done:**
+- Fixed Google Sheets 429 rate limit in watchlist scanner: worksheet object cached per run (was re-authenticating per company), all sheet writes batched into single `ws.batch_update()` call
+- Fixed orphaned YAML entries in `config.yaml`: 18 items were being parsed as `required_keywords` but should be `exclude_keywords` (functional bug); 5 that conflicted with active job title searches were dropped entirely
+- Removed AI-related terms from `exclude_keywords` (`AI strategy`, `agentic AI`, `GenAI`, `artificial intelligence`) — these shouldn't disqualify a JD
+- Added `agencies/` to `.gitignore` and committed agency experience bonus in `fit_scorer.py` prompt (R/GA, AKQA, Verndale agency background treated as positive signal)
+- Fixed cross-source duplicate jobs: `deduplicator.py` now normalizes company names (strips Inc./LLC/Corp.) and titles (strips Sr./of/punctuation) before hashing — catches same job from LinkedIn + ATS Watchlist with slightly different strings
+- Rewrote README as portfolio-grade documentation with "Design Decisions Worth Explaining" section covering ATS Watchlist sourcing rationale, asymmetric feedback loop, and rate limit architecture
+- First scheduled 5am run with ATS Watchlist completed successfully: 384 scraped, 124 new, 12 added to sheet, email delivered at 05:51
+
+**In Progress:**
+- Nothing
+
+**Next:**
+- Address remaining tech debt: refactor duplicated GSheets auth logic between `ats_scraper.py` and `sheets_updater.py`
+- Monitor tomorrow's run for duplicate reduction (dedup hash changed; seen_jobs.json will rebuild with new hashes on next run)
+- Start career strategy expansion: multi-profile AI search, career-advisor skill, networking tracker
+
+**Notes:**
+- `seen_jobs.json` uses old dedup hashes — first run after today's fix may briefly re-surface a small number of previously-seen jobs; normalizes after one run
+- Full run with 727-company watchlist takes ~51 min (ATS detection now cached for all companies; time is mainly job board scraping)
+
 ## 2026-04-09
 
 **Done:**
