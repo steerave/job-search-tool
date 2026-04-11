@@ -1,5 +1,27 @@
 # Project Status Log
 
+## 2026-04-11
+
+**Done:**
+- Diagnosed 5am run: pipeline was not crashing — watchlist scan of 650+ companies took 30+ min serially, email arrived late
+- Designed and implemented parallel watchlist ATS scanning using `ThreadPoolExecutor` (`src/ats_scraper.py`)
+- Extracted `_scan_company()` worker (self-contained, returns `(jobs, updates)` tuples); main thread merges and batch-writes
+- Added `watchlist.scan_workers: 10` to `config.yaml` — expected scan time ~65s vs 10+ min serial
+- Added 3 new unit tests (TDD): worker return values, fetch failure handling, executor worker count — 93 total passing
+- Wrote design spec (`docs/superpowers/specs/2026-04-11-parallel-watchlist-scanning-design.md`) and implementation plan (`docs/superpowers/plans/2026-04-11-parallel-watchlist-scanning.md`)
+- Updated README and CHANGELOG with `scan_workers` config documentation
+
+**In Progress:**
+- Nothing
+
+**Next:**
+- Monitor tomorrow's 5am run to confirm watchlist scan completes in ~1-2 min and email arrives on time
+- Address remaining tech debt: refactor duplicated GSheets auth logic between `ats_scraper.py` and `sheets_updater.py`
+- Start career strategy expansion: multi-profile AI search, career-advisor skill, networking tracker
+
+**Notes:**
+- `scan_workers` defaults to 10 — tunable in `config.yaml` if rate limiting is observed on any ATS
+
 ## 2026-04-10
 
 **Done:**
