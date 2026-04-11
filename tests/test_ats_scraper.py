@@ -335,9 +335,10 @@ def test_fetch_watchlist_jobs_known_company():
 
     config = {"watchlist": {"enabled": True, "lookback_days": 3, "detection_order": ["greenhouse"]}}
 
-    with patch("src.ats_scraper._get_watchlist_worksheet", return_value=_mock_worksheet(rows)), \
-         patch("src.ats_scraper.requests.get", return_value=mock_resp), \
-         patch("src.ats_scraper.update_watchlist_last_scanned"):
+    ws = _mock_worksheet(rows)
+    ws.batch_update = MagicMock()
+    with patch("src.ats_scraper._get_watchlist_worksheet", return_value=ws), \
+         patch("src.ats_scraper.requests.get", return_value=mock_resp):
         jobs = fetch_watchlist_jobs(config)
 
     # Only the remote job should come through
@@ -383,9 +384,10 @@ def test_fetch_watchlist_jobs_filters_old_jobs():
     mock_resp.json.return_value = gh_payload
 
     config = {"watchlist": {"enabled": True, "lookback_days": 3, "detection_order": ["greenhouse"]}}
-    with patch("src.ats_scraper._get_watchlist_worksheet", return_value=_mock_worksheet(rows)), \
-         patch("src.ats_scraper.requests.get", return_value=mock_resp), \
-         patch("src.ats_scraper.update_watchlist_last_scanned"):
+    ws = _mock_worksheet(rows)
+    ws.batch_update = MagicMock()
+    with patch("src.ats_scraper._get_watchlist_worksheet", return_value=ws), \
+         patch("src.ats_scraper.requests.get", return_value=mock_resp):
         jobs = fetch_watchlist_jobs(config)
     assert jobs == []
 

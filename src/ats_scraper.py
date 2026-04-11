@@ -537,6 +537,8 @@ def _scan_company(
 
     except Exception as e:
         logger.error(f"[Watchlist] Error processing {company_name}: {e}")
+        # Return any detection updates already queued (e.g. newly detected ATS type)
+        # even if the subsequent job fetch failed. Jobs are safely empty.
         return [], updates
 
 
