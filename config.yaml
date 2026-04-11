@@ -225,6 +225,8 @@ watchlist:
   enabled: true
   # Only fetch jobs posted/updated within this many days (avoids reprocessing old postings)
   lookback_days: 3
+  # Number of parallel workers for scanning companies (ThreadPoolExecutor)
+  scan_workers: 10
   # ATS probe order for unknown companies (first successful match wins)
   detection_order:
     - greenhouse
