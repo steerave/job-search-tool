@@ -541,7 +541,8 @@ def test_fetch_watchlist_jobs_uses_configured_workers():
     ws.batch_update = MagicMock()
 
     with patch("src.ats_scraper._get_watchlist_worksheet", return_value=ws), \
-         patch("src.ats_scraper._scan_company", return_value=([], [])) as mock_scan, \
+         patch("src.ats_scraper._scan_company", return_value=([], [])), \
+         patch("src.ats_scraper.as_completed", return_value=[]), \
          patch("src.ats_scraper.ThreadPoolExecutor") as mock_executor_cls:
 
         mock_executor = MagicMock()
@@ -552,4 +553,5 @@ def test_fetch_watchlist_jobs_uses_configured_workers():
 
         fetch_watchlist_jobs(config)
 
+    mock_executor.submit.assert_called_once()
     mock_executor_cls.assert_called_once_with(max_workers=5)
