@@ -22,9 +22,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `--force` and `--dry-run` flags for manual control
 - Target role profile injection into fit scoring prompt for smarter job matching
 - `run_feedback.bat` for Windows Task Scheduler scheduling
+- Local QC location post-filter: drops jobs whose reported location doesn't match known Quad Cities-area cities after scraping. Fixes JobSpy ignoring the radius parameter. Configurable via `local_qc.location_include` in config.yaml.
+- Title domain pre-filter: skips Claude scoring for jobs with no domain-relevant words in the title (e.g. "Senior Art Director", "iOS Software Engineer"). Catches off-target results from watchlist/local-QC that bypass required_keywords. Configurable via `title_domain_words`.
+- `max_jobs_to_score` cap (default 150): hard ceiling on Claude API calls per run with a log warning when hit. Truncates by insertion order; cap-truncated jobs retry on future runs.
 
 ### Changed
 - Watchlist ATS scan now runs companies in parallel (configurable `scan_workers`, default 10), reducing scan time from 10+ minutes to ~65 seconds for 650 companies
+- Fit scorer now uses prompt caching (`cache_control: ephemeral`) for the candidate profile system prompt. Profile is built once per batch — subsequent calls pay ~10% for the cached portion, reducing input token cost ~85% on a typical run.
 
 ### Fixed
 - Config updater YAML indentation — new entries now preserve correct formatting

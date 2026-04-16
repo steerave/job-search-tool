@@ -110,6 +110,8 @@ The run now completes in under an hour for 700+ companies with no quota errors.
 - **Google Sheets integration** — color-coded scores, status tracking, filtering, manual note columns
 - **Email digest** — daily morning summary of top matches
 - **Audit trail** — every automated config change is logged with reasoning to `logs/config_changes.log`
+- **Token efficiency** — prompt caching on the candidate profile, a title domain pre-filter, and a configurable per-run scoring cap keep Claude API costs predictable on busy scrape days.
+- **Local QC quality** — location post-filter removes non-local results that JobSpy returns despite the radius setting, keeping Local QC results genuinely local to the Quad Cities area.
 
 ---
 
