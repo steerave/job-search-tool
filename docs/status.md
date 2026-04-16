@@ -1,5 +1,32 @@
 # Project Status Log
 
+## 2026-04-16
+
+**Done:**
+- Diagnosed root cause of today's 5am credit burn: 259 Claude API calls with no caching, plus 30+ non-local jobs scored under Local QC due to JobSpy ignoring the radius parameter
+- Added location post-filter to `scrape_local_qc()` — drops results whose location doesn't match QC-area city/state patterns (`local_qc.location_include` in config.yaml)
+- Added title domain pre-filter in `main.py` (`_filter_scoreable_jobs`) — skips Claude scoring for off-target titles like "iOS Software Engineer"; configurable via `title_domain_words`
+- Added `max_jobs_to_score: 150` cap in `main.py` — hard ceiling on Claude API calls per run with log warning; cap-truncated jobs retry on future runs
+- Rewrote `src/fit_scorer.py` to use prompt caching (`cache_control: ephemeral`) — profile system prompt built once per batch, ~85% input token cost reduction on subsequent calls
+- Fixed: domain-skipped jobs now marked as seen so they don't re-enter the pipeline on every run
+- Built `scripts/log_summary.py` — parses pipeline logs in ~0.1s, prints compact report: scraped by type, filter stats, scored jobs, sheet additions, estimated API cost with caching, errors
+- Added `/project:diagnose-run` Claude Code command (`.claude/commands/diagnose-run.md`) — structured health check with thresholds, root cause analysis, and recommendations; replaces manual 80K-token log reads
+- Added `.claude/commands/` to `.gitignore` exception so project commands are version-controlled
+- 153 tests passing (added 9 location filter tests, 7 pre-filter tests, 11 caching structure tests, 33 log summary tests)
+
+**In Progress:**
+- Nothing
+
+**Next:**
+- Monitor tomorrow's 5am run to confirm: local QC results are genuinely QC-area, cost is under $1.50, cap not hit
+- Implement hooks discussed this session: config YAML validation hook, test runner hook, pipeline auto-summary hook
+- Add `estimate-costs` project-level skill (item 6 from priority list)
+- Start career strategy expansion: multi-profile AI search, career-advisor skill, networking tracker
+
+**Notes:**
+- Root cause today: JobSpy ignores `distance` radius on most boards — local search must be filtered post-scrape, not at query time
+- Prompt caching requires Anthropic SDK ≥ 0.28; `cache_control` on system prompt blocks, not messages
+
 ## 2026-04-11
 
 **Done:**
