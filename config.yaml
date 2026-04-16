@@ -213,7 +213,7 @@ title_domain_words:
 
 # ---- Scoring Cap -----------------------------------------
 # Hard limit on jobs scored per run. If exceeded, a warning is logged
-# and jobs are truncated (national_remote first, then local_qc, then watchlist).
+# and the list is truncated by insertion order (first-scraped jobs kept).
 # Prevents runaway API costs on bad scrape days.
 max_jobs_to_score: 150
 

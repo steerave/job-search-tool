@@ -264,8 +264,9 @@ def run_pipeline(config: dict, dry_run: bool = False, no_age_filter: bool = Fals
         logger.error(f"Google Sheets connection failed: {e}")
         errors.append(f"Sheets connection failed: {e}")
 
-    # Mark all new jobs as seen
-    seen = mark_jobs_seen(new_jobs, seen)
+    # Mark scored jobs AND domain-filtered jobs as seen.
+    # Cap-truncated jobs are intentionally left unseen (retry on lower-volume days).
+    seen = mark_jobs_seen(new_jobs + domain_skipped, seen)
 
     # Write below-threshold jobs
     if sheets and below_threshold:
