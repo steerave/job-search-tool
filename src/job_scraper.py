@@ -169,6 +169,27 @@ def _apply_keyword_filters(jobs: list[dict], config: dict, skip_required: bool =
     return filtered
 
 
+def _filter_by_location(jobs: list[dict], location_include: list[str]) -> list[dict]:
+    """
+    Keep only jobs whose location matches at least one of the include patterns.
+    Jobs with empty/missing location are kept (benefit of the doubt).
+    If location_include is empty, all jobs are returned unchanged.
+    """
+    if not location_include:
+        return jobs
+    patterns = [p.lower() for p in location_include]
+    filtered = []
+    for job in jobs:
+        loc = job.get("location", "").lower()
+        if not loc or any(p in loc for p in patterns):
+            filtered.append(job)
+        else:
+            logger.debug(
+                f"Location filter: dropping '{job['title']}' @ {job['company']} [{job['location']}]"
+            )
+    return filtered
+
+
 def scrape_national_remote(config: dict) -> list[dict]:
     """
     Search 1: National remote jobs across the US.
@@ -250,6 +271,12 @@ def scrape_local_qc(config: dict) -> list[dict]:
     # Skip required_keywords for local search — local postings use generic titles
     # and won't contain "digital delivery" etc. Excluded keywords still apply.
     all_jobs = _apply_keyword_filters(all_jobs, config, skip_required=True)
+
+    location_include = cfg.get("location_include", [])
+    if location_include:
+        before = len(all_jobs)
+        all_jobs = _filter_by_location(all_jobs, location_include)
+        logger.info(f"[Local QC] Location filter: {before - len(all_jobs)} non-local jobs removed")
 
     for job in all_jobs:
         job["search_type"] = SEARCH_TYPE_LOCAL

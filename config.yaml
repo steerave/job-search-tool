@@ -60,6 +60,22 @@ job_titles:
   - "Director AI Strategy and Delivery"
   - "Director Platform Delivery"
   - "Director Digital Delivery and Operations"
+  # Marketing / Creative / Project Management
+  - "Digital Project Manager"
+  - "Marketing Project Manager"
+  - "Creative Project Manager"
+  - "Digital Producer"
+  - "Marketing Operations Manager"
+  - "Campaign Operations Manager"
+  - "Content Operations Manager"
+  - "Web Project Manager"
+  - "Integrated Project Manager"
+  - "Account Project Manager"
+  - "Freelance Producer"
+  - "Contract Program Manager Marketing"
+  - "Part-Time Marketing Operations"
+  - "Fractional Marketing Operations"
+  - "Contractor Digital Delivery"
 
 # ---- Required Keywords ------------------------------------
 # Jobs must contain at least one of these in title or description.
@@ -97,7 +113,6 @@ exclude_keywords:
   - "machine learning engineer"
   - "data scientist"
   - "data engineer"
-  - "embedded"
   - "hardware"
   - "COBOL"
   - "mainframe"
@@ -127,7 +142,6 @@ exclude_keywords:
   - "sales director"
   # Non-digital operations
   - "supply chain"
-  - "procurement"
   - "construction"
   - "manufacturing"
   - "logistics"
@@ -158,8 +172,6 @@ exclude_keywords:
   # Industry / role type mismatches (added by feedback analyzer)
   # Note: "solutions delivery", "platform delivery", "AI delivery", "implementation services",
   # "delivery operations" were NOT added here — they conflict with active job title searches.
-  - "offshore teams"
-  - "release governance"
   - "pure PMO"
   - "portfolio strategy"
   - "POS systems"
@@ -167,9 +179,6 @@ exclude_keywords:
   - "healthcare"
   - "clinical"
   - "pharma"
-  - "fintech"
-  - "banking"
-  - "financial services"
 
 # ---- Company Blacklist ------------------------------------
 # Jobs from these companies are skipped.
@@ -217,6 +226,22 @@ local_qc:
   # Include hybrid and on-site roles (remote is filtered out separately)
   employment_types:
     - "fulltime"
+  # After scraping, drop jobs whose location doesn't match any of these strings.
+  # Case-insensitive substring match. Empty location is always kept.
+  # Leave as [] to disable.
+  location_include:
+    - "davenport"
+    - "bettendorf"
+    - "moline"
+    - "rock island"
+    - "east moline"
+    - "silvis"
+    - "iowa city"
+    - "muscatine"
+    - "galesburg"
+    - "quad cities"
+    - "quad-cities"
+    - ", ia"
 
 # ---- ATS Watchlist Scan Config ---------------------------
 # Companies are managed in the "Watchlist" tab of your Google Sheet.
