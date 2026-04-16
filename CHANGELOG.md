@@ -25,6 +25,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Local QC location post-filter: drops jobs whose reported location doesn't match known Quad Cities-area cities after scraping. Fixes JobSpy ignoring the radius parameter. Configurable via `local_qc.location_include` in config.yaml.
 - Title domain pre-filter: skips Claude scoring for jobs with no domain-relevant words in the title (e.g. "Senior Art Director", "iOS Software Engineer"). Catches off-target results from watchlist/local-QC that bypass required_keywords. Configurable via `title_domain_words`.
 - `max_jobs_to_score` cap (default 150): hard ceiling on Claude API calls per run with a log warning when hit. Truncates by insertion order; cap-truncated jobs retry on future runs.
+- `scripts/log_summary.py`: parses pipeline logs and prints a compact summary — scraped counts by search type, filter stats, scored jobs, sheet additions, estimated API cost with caching, and any errors. Accepts an optional date argument (defaults to today).
+- `/project:diagnose-run` Claude Code command: runs the summary script, evaluates metrics against health thresholds, identifies root causes from the log, and delivers specific actionable recommendations. Replaces manual 80K-token log reads during debugging sessions.
 
 ### Changed
 - Watchlist ATS scan now runs companies in parallel (configurable `scan_workers`, default 10), reducing scan time from 10+ minutes to ~65 seconds for 650 companies

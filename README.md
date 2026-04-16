@@ -232,6 +232,23 @@ python analyze_feedback.py --force
 python analyze_feedback.py --dry-run
 ```
 
+### Diagnostic commands
+
+```bash
+# Print a compact summary of today's pipeline run
+python scripts/log_summary.py
+
+# Print summary for a specific date
+python scripts/log_summary.py 2026-04-16
+```
+
+In a Claude Code session:
+
+```
+/project:diagnose-run          # diagnose today's run
+/project:diagnose-run yesterday
+```
+
 ---
 
 ## Feedback Loop Design
