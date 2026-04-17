@@ -12,6 +12,8 @@ from pathlib import Path
 
 from ruamel.yaml import YAML
 
+from api_cost_logger import log_api_cost
+
 logger = logging.getLogger(__name__)
 
 MODEL = "claude-sonnet-4-6"
@@ -162,6 +164,7 @@ def generate_config_suggestions(
             system=SYSTEM_PROMPT,
             messages=[{"role": "user", "content": prompt}],
         )
+        log_api_cost("config_updater", MODEL, response.usage)
         raw = response.content[0].text.strip()
         suggestions = parse_config_suggestions(raw)
         logger.info(f"Config suggestions: {json.dumps(suggestions, indent=2)}")

@@ -14,6 +14,8 @@ import logging
 import time
 from pathlib import Path
 
+from api_cost_logger import log_api_cost
+
 logger = logging.getLogger(__name__)
 
 
@@ -199,6 +201,7 @@ def score_job(job: dict, cached_system: str, client) -> dict:
                 ],
                 messages=[{"role": "user", "content": job_prompt}],
             )
+            log_api_cost("fit_scorer", MODEL, response.usage)
             raw = response.content[0].text.strip()
 
             if "```json" in raw:

@@ -7,6 +7,8 @@ The profile is written to profile/target_role_profile.md and used by fit_scorer.
 
 import logging
 
+from api_cost_logger import log_api_cost
+
 logger = logging.getLogger(__name__)
 
 MODEL = "claude-sonnet-4-6"
@@ -139,6 +141,7 @@ def generate_target_profile(
             system=SYSTEM_PROMPT,
             messages=[{"role": "user", "content": prompt}],
         )
+        log_api_cost("profile_generator", MODEL, response.usage)
         profile_text = response.content[0].text.strip()
         logger.info(f"Generated profile: {len(profile_text)} chars")
         return profile_text
