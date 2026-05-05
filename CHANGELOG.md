@@ -29,6 +29,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `/project:diagnose-run` Claude Code command: runs the summary script, evaluates metrics against health thresholds, identifies root causes from the log, and delivers specific actionable recommendations. Replaces manual 80K-token log reads during debugging sessions.
 - API cost logging: every Claude API call now appends one line to `logs/api_costs.log` with datetime, caller, model, token breakdown (input / cache-write / cache-read / output), and USD cost. Zero overhead — reads `response.usage` already returned by the SDK.
 - `/api-cost-report` global Claude Code skill: reads `logs/api_costs.log` and reports total spend, cost by caller, cost by day, and top expensive calls. Works with any project using the same log format.
+- Senior / technical Project Manager titles (Senior PM, Technical PM, Senior Technical PM, IT PM, Senior IT PM, Software PM, Project Manager) added to national remote search — broader coverage for remote PM roles.
+- `production` and `project` added to `title_domain_words` so generic "Project Manager" and "Producer" titles from watchlist/local-QC pass the pre-scoring title filter.
 
 ### Changed
 - Watchlist ATS scan now runs companies in parallel (configurable `scan_workers`, default 10), reducing scan time from 10+ minutes to ~65 seconds for 650 companies
@@ -37,3 +39,4 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 - Config updater YAML indentation — new entries now preserve correct formatting
 - Config suggestion JSON parsing — increased max_tokens to prevent truncation, added fallback parser to recover partial responses
+- Manual pipeline runs failing silently when launching shell pre-sets `ANTHROPIC_API_KEY=""` (or any other `.env` key to empty). `load_dotenv()` now uses `override=True` so `.env` always wins. Daily 5am Task Scheduler runs unaffected (clean env).

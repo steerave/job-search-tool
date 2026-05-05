@@ -60,7 +60,12 @@ def load_config(config_path: str) -> dict:
 def load_env(env_path: str = ".env") -> None:
     try:
         from dotenv import load_dotenv
-        load_dotenv(env_path)
+        # override=True ensures .env wins over any pre-existing (possibly empty)
+        # env var inherited from the launching shell. Task Scheduler runs are
+        # unaffected (clean env); only manual runs in shells with pre-set vars
+        # benefit. Without this, manual runs silently fail if e.g.
+        # ANTHROPIC_API_KEY="" exists in the parent environment.
+        load_dotenv(env_path, override=True)
     except ImportError:
         logger.warning("python-dotenv not installed - reading from system environment only")
 
