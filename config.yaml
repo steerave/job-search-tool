@@ -60,6 +60,14 @@ job_titles:
   - "Director AI Strategy and Delivery"
   - "Director Platform Delivery"
   - "Director Digital Delivery and Operations"
+  # General / Technical Project Management (remote-friendly)
+  - "Senior Project Manager"
+  - "Technical Project Manager"
+  - "Senior Technical Project Manager"
+  - "IT Project Manager"
+  - "Senior IT Project Manager"
+  - "Software Project Manager"
+  - "Project Manager"
   # Marketing / Creative / Project Management
   - "Digital Project Manager"
   - "Marketing Project Manager"
@@ -198,6 +206,7 @@ min_fit_score: 5
 title_domain_words:
   - "delivery"
   - "program"
+  - "project"
   - "digital"
   - "technical"
   - "implementation"
