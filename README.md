@@ -364,3 +364,46 @@ Typical cost at default settings: ~$0.05–$0.15 per generated document set.
 **Profile parsing issues:** Manually edit `profile/parsed_profile.json` — the LLM uses this directly so accuracy matters.
 
 **Watchlist detection slow on first run:** Expected — 700+ unknown companies each require ATS probing. The first full run takes 45–90 minutes. All detections are cached to the sheet, so subsequent runs skip detection entirely for known companies.
+
+---
+
+## Working with Claude Code
+
+This repository is built and maintained using [Claude Code](https://claude.com/claude-code). The workflow itself is part of the project — the patterns and artifacts below ship in the repo.
+
+### Project-scoped slash command
+
+[`.claude/commands/diagnose-run.md`](.claude/commands/diagnose-run.md) defines a `/diagnose-run` command that an interactive Claude Code session uses to triage a pipeline run. It walks Claude through a fixed procedure:
+
+1. Run [`scripts/log_summary.py`](scripts/log_summary.py) for the target date
+2. Evaluate output against named thresholds — raw scrape counts, scoring failures, cap hits, error count, sheet writes, estimated cost
+3. Read the actual log file to surface specific anomalies — over-scraping titles, off-domain skips, watchlist hits, scrape failures
+4. Cross-reference recent automated config changes from `logs/config_changes.log`
+5. Return a structured Health Status / Anomalies / Root cause / Recommendations report
+
+Slash commands are used here as **codified diagnostic procedures** — Claude follows the same steps every time so the diagnosis doesn't drift between sessions.
+
+Invoke from a Claude Code session inside this repo:
+
+```
+/diagnose-run                # today
+/diagnose-run yesterday      # natural-language date
+/diagnose-run 2026-04-15
+```
+
+### Spec-and-plan-driven development
+
+Non-trivial features in this project follow a brainstorm → spec → plan → TDD → code review cycle. The design and planning artifacts live alongside the code:
+
+- [`docs/superpowers/specs/`](docs/superpowers/specs/) — design documents written before implementation
+- [`docs/superpowers/plans/`](docs/superpowers/plans/) — step-by-step implementation plans referenced during the build
+
+For example, the parallel watchlist scanning rework that cut ATS detection from 10+ minutes to ~65 seconds went through a spec → plan → execute cycle visible in [`2026-04-11-parallel-watchlist-scanning-design.md`](docs/superpowers/specs/2026-04-11-parallel-watchlist-scanning-design.md) and [`2026-04-11-parallel-watchlist-scanning.md`](docs/superpowers/plans/2026-04-11-parallel-watchlist-scanning.md). The *reasoning* behind significant changes is auditable, not just the code diff.
+
+### Daily status log
+
+[`docs/status.md`](docs/status.md) is a chronological session continuity log — most recent day at the top, each entry sectioned as Done / In Progress / Next / Notes. It is the single source of truth when picking up after a context reset or a multi-day break.
+
+### What is *not* Claude-driven
+
+The pipeline runs unattended (Windows Task Scheduler at 5am) and does **not** invoke Claude Code at runtime. The LLM calls inside the pipeline (fit scoring, feedback analysis, profile updates) go directly to the Anthropic Python SDK. Claude Code is used for *building and maintaining* the project, not for executing it — the deterministic 5am cron has no LLM agent in the loop, by design.

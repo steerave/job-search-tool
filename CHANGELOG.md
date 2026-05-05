@@ -31,6 +31,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `/api-cost-report` global Claude Code skill: reads `logs/api_costs.log` and reports total spend, cost by caller, cost by day, and top expensive calls. Works with any project using the same log format.
 - Senior / technical Project Manager titles (Senior PM, Technical PM, Senior Technical PM, IT PM, Senior IT PM, Software PM, Project Manager) added to national remote search — broader coverage for remote PM roles.
 - `production` and `project` added to `title_domain_words` so generic "Project Manager" and "Producer" titles from watchlist/local-QC pass the pre-scoring title filter.
+- README "Working with Claude Code" section: documents the `.claude/commands/diagnose-run.md` slash command, the spec/plan-driven development workflow under `docs/superpowers/`, and the daily status log. Also clarifies that Claude Code is the development environment, not a runtime dependency of the pipeline.
 
 ### Changed
 - Watchlist ATS scan now runs companies in parallel (configurable `scan_workers`, default 10), reducing scan time from 10+ minutes to ~65 seconds for 650 companies
