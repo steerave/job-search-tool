@@ -373,7 +373,7 @@ This repository is built and maintained using [Claude Code](https://claude.com/c
 
 ### Project-scoped slash command
 
-[`.claude/commands/diagnose-run.md`](.claude/commands/diagnose-run.md) defines a `/diagnose-run` command that an interactive Claude Code session uses to triage a pipeline run. It walks Claude through a fixed procedure:
+[`.claude/commands/diagnose-run.md`](.claude/commands/diagnose-run.md) defines a `/project:diagnose-run` command that an interactive Claude Code session uses to triage a pipeline run. It walks Claude through a fixed procedure:
 
 1. Run [`scripts/log_summary.py`](scripts/log_summary.py) for the target date
 2. Evaluate output against named thresholds — raw scrape counts, scoring failures, cap hits, error count, sheet writes, estimated cost
@@ -386,9 +386,9 @@ Slash commands are used here as **codified diagnostic procedures** — Claude fo
 Invoke from a Claude Code session inside this repo:
 
 ```
-/diagnose-run                # today
-/diagnose-run yesterday      # natural-language date
-/diagnose-run 2026-04-15
+/project:diagnose-run                # today
+/project:diagnose-run yesterday      # natural-language date
+/project:diagnose-run 2026-04-15
 ```
 
 ### Spec-and-plan-driven development
